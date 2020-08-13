@@ -1,0 +1,91 @@
+#Code generates Monte Carlo scenarios for use in Python DES model.
+#Imports flight arrival times for airport terminal for 2019
+#Generates distribution of flight delays
+#Sampled and applied to the required day's schedule to create scenarios
+#Load Libraries
+library(lubridate)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(viridis)
+library(xts)
+library(ggthemes)
+
+
+Set Local Drive (Local_Drive)
+
+#Load and amend 2019 Flight data
+
+Load in APT2019.csv data as Terminal_19
+
+Drop unnecessary columns in Terminal_19
+
+Convert Scheduled Arrival Date in Terminal_19 to correct format
+
+Remove duplicates from Terminal_19
+
+Remove records from Terminal_19 that have Flight Status equal to "Cancelled","Canceled", "Port Forecast" or"ACL Forecast" 
+ 
+Replace missing arrival data in Terminal_19 with estimated arrival or scheduled time
+
+Create a new column in Terminal_19 for scheduled arrival in correct POSIXct format
+
+Create a new column in Terminal_19 for actual arrival in correct POSIXct format
+
+Create a new column in Terminal_19 for pcp arrival time in correct POSIXct format
+
+Create a new column in Terminal_19 for flight delay by minusing scheduled arrival from actual. 
+
+Filter out flight delay errors that are a result of a flight arriving before midnight when scheduled after midnight. 
+
+Create a new column in Terminal_19 for gate walk times by minusing actual arrival from pcp arrival. 
+
+Create a scheduled pcp arrival time in Terminal_19 by adding walk time to scheduled arrival time and times by 60 to convert to minutes.   
+
+Create a separate list of flight delay times from Terminal_19 as 'delay_list'.
+
+Replace missing Advanced Passenger Information (API) values in Terminal_19 data with either historic flight or terminal averages
+
+
+#Monte Carlo scenario generation
+#Set required datetime values for MC scenario generation using nonEEA analysis
+
+Set Day_Start as "2019/01/01 04:00"
+Set Day_End as"2019/02/01 04:00"
+Set req_date as "2019/01/01"
+
+Convert Day_Start to POSIXct format and save as Start
+Convert Day_End to POSIXct format and save as End
+Convert req_date to date format and set as Required_Date
+
+Filter Terminal_19 by Required data and save as Flights_Req
+
+#Create a scenario based on scheduled arrival times. 
+
+Copy Flights_Req and save as MC_Scheduled
+Create a colum in MC_Scheduled for flight delay and populate with 'null'
+Create a simulated arrival time column in MC_Scheduled and populate with scheduled arrival time
+Create a simulated PCP arrival time column in MC_Scheduled and populate with scheduled arrival time
+Create a scenario number column in MC_Scheduled and populate with '1'
+
+#Repeat above process to create a scenario of actual landing times
+Copy Flights_Req and save as MC_Actual
+Create a colum in MC_Actual for flight delay and populate with Actual Delay
+Create a simulated arrival time column in MC_Actual and populate with actual arrival time
+Create a simulated PCP arrival time column in MC_Actual and populate with actual arrival time
+Create a scenario number column in MC_Actual and populate with '2'
+
+Combine MC_Scheduled and MC_Actual into one dataframe called MC
+
+# Start process to generate 498 random flight arrival schedules using the delay distribution.  
+Set random seed as 3.141
+Start Loop for i beteween 3 and 500
+  Display i
+  Sample delay_list to randomly select a fixed number of delays according to number of flights in Flights_Req
+  Add sampled delays to the scheduled arrival times in Flights_Req to create new simulated flight arrival time column
+  Add sampled delays to the scheudled pcp arrival times in Flights_Req to create new simulated pcp arrival time column
+  Create a new scenario number column and populate it with the value of 'i'. 
+  Append created dataframe to the MC dataframe. 
+End Loop
+
+Save MC dataframe as file

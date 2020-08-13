@@ -1,0 +1,94 @@
+
+#Agent-based simulation of airport terminal. Models flight arrival, PAX disembarkment, joining/
+#nonEEA Queue, queue processing and caluculate of wait times. 
+#Fifth model: Cycles through all required dates for 6-15 desks for 500 scenarios
+
+import numpy as np
+import agentframework_mm5
+import pandas as pd
+from datetime import datetime, timedelta
+
+Create variable to set total number of scenarios as 500
+
+#Start Simulation model, cycling through required dates. 
+
+For each date in a list of datetimes. 
+    set day_start as the date plus 4 hours
+    set day_end as the data plus 28 hours
+    Load the flight data for the date and save as Flight_data
+    Load the MC Scenario data and save as MC_data
+    Convert the simulated pcp arrival data in MC_data to date format
+    Start Function to label flights that land outside our concerned time window as 'cancelled'. 
+        If Simulated PCP arrival is after day_end
+            return "C"
+        Else If Simulated PCP arrival time is before day_start
+            return "C"
+        Else
+            return "L"
+    Create a new column in MC_data, applying the above function to each row of flight data. 
+    Create an empty list to store datetime periods as int_datetime
+    
+    Start Function to create 30 second time intervals for the required date. 
+        Set curr as the start value
+        Whilst curr is less than the end value
+		Add time period to curr
+    
+    Run above function using day_start for start, day_end for end and 30 seconds for timeperiod
+	Append the results from the above function to the int_datetime list
+   
+    Run simulations for d number of operational desks, between 6 and 16:
+        Set open_desks equal to d
+        Create empty list for passenger details as pass_det
+        
+	Start Loop for each scenario (i) in MC_data
+            Display "Scenario 'i': Working".
+            Filter MC_data by i to create new dataframe MC_s
+            Merge MC_s with Flight_data to create new dataframe FD_s
+	    Filter FD_s to remove flights with a cancelled status
+	    Create an empty list for queues as queue
+	    Create an empty list for passenger data as passengers
+	    Set pass_num to 0
+	    Set f_num to the number fo flights in FD_s
+            Create an empty list to record queue lenghs as queue_length
+            Create an instance of a Queue class
+            Create an empty list for flights as fl_list
+	    
+	    Start Loop for each flight in FD_s
+		Set AT as the simulated PCP arrival time
+		Set PAX as the total number of PCP passengers
+		Set EEA as the total number of EEA passengers
+		Set Non_EEA as the total number of non_EEA passengers
+		Calculate the ratio of non_EEA to EEA passengers and save as non_EEA_r
+		If non_EEA_r is equal to 0, then set it equal to 1. 
+		Create flight as an agent using the Flights agent class, sending through the attributes created above.       
+		Append flight agent to the fl_list
+            
+            Start Loop for each time interval (t) in int_datetime
+                For each flight (fl) in fl_list
+			Run the land action in the flight class
+			Run the disembark action in the flight class
+                Run the reduction action in queue class. 
+                Add the current queue size to the queue_size list
+            Create a dataframe from the queue_list, columun names 'Time' and 'Size'. Save as ql.   
+
+            Iterate through passengers in passengers list
+                If passenger failed to exit system, increase exit_failed value by 1
+                ELSE
+                Store passengers queue arrival time to AT.
+		Store passengers queue exit time to ET
+		Store i to Scenario
+		Create vector pdet with AT, ET and i
+		Append pdet to pass_det list
+	   
+	    Display "Scenario 'i': Complete"
+
+        Create array pa from pass_det list
+	Create dataframe ps from pa, with column headings 'Scenario','Arrival_Time' and'Exit_Time'
+        Create a new column in ps for 'Wait Time' by subtracting Arrival Time from Exit Time
+
+        Define function that converts wait time into minutes
+            Set wait_time_mins equal to Wait Time divided by 60.
+            Return wait_time_mins
+
+        Use above function to convert Wait Time in ps to minutes.
+	Save ps as csv file
